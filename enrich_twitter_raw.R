@@ -10,15 +10,13 @@
 #  environment variables – NO hard‑coding in the script.
 # ──────────────────────────────────────────────────────────────────────────────
 
-## 0 – packages ----------------------------------------------------------------
-need <- c("DBI", "RPostgres", "dplyr", "stringr", "tibble")
+## 0 – packages ----------------------------------------------------------------
+need <- c("DBI", "RPostgres", "dplyr", "stringr", "tibble", "purrr")  # ← added purrr
 new  <- need[!need %in% rownames(installed.packages())]
 if (length(new)) install.packages(new, repos = "https://cloud.r-project.org")
 invisible(lapply(need, library, character.only = TRUE))
 
-## 1 – connect to Supabase (as Postgres) ---------------------------------------
-# • set these as GitHub Secrets OR export locally before running:
-#   SUPABASE_HOST, SUPABASE_PORT, SUPABASE_DB, SUPABASE_USER, SUPABASE_PWD
+## 1 – connect to Supabase (as Postgres) ---------------------------------------
 creds <- Sys.getenv(c(
   "SUPABASE_HOST", "SUPABASE_PORT", "SUPABASE_DB",
   "SUPABASE_USER", "SUPABASE_PWD"
@@ -27,6 +25,17 @@ creds <- Sys.getenv(c(
 if (any(!nzchar(creds)))
   stop("❌ One or more Supabase env vars are missing – aborting.")
 
+# sanity check  ───────────────────────────────────────────────────────────────
+cat("\n--- Supabase env vars --------------------------------\n")
+safe_print <- function(key) {
+  val <- Sys.getenv(key)
+  if (key == "SUPABASE_PWD") val <- sub(".+", "********", val)  # mask pwd
+  cat(key, "=", val, "\n")
+}
+purrr::walk(names(creds), safe_print)
+cat("--------------------------------------------------------\n")
+
+## 2 – DB connection -----------------------------------------------------------
 con <- DBI::dbConnect(
   RPostgres::Postgres(),
   host     = creds["SUPABASE_HOST"],
@@ -36,6 +45,7 @@ con <- DBI::dbConnect(
   password = creds["SUPABASE_PWD"],
   sslmode  = "require"
 )
+
 
 ## 2 – download twitter_raw ----------------------------------------------------
 twitter_raw <- DBI::dbReadTable(con, "twitter_raw")
