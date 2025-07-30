@@ -17,10 +17,15 @@ if (length(new)) install.packages(new, repos = "https://cloud.r-project.org")
 invisible(lapply(need, library, character.only = TRUE))
 
 ## 1 – connect to Supabase (as Postgres) ---------------------------------------
-creds <- Sys.getenv(c(
-  "SUPABASE_HOST", "SUPABASE_PORT", "SUPABASE_DB",
-  "SUPABASE_USER", "SUPABASE_PWD"
-), names = TRUE)
+trim_env <- function(x) trimws(Sys.getenv(x))
+
+creds <- c(
+  SUPABASE_HOST = trim_env("SUPABASE_HOST"),
+  SUPABASE_PORT = trim_env("SUPABASE_PORT"),
+  SUPABASE_DB   = trim_env("SUPABASE_DB"),
+  SUPABASE_USER = trim_env("SUPABASE_USER"),
+  SUPABASE_PWD  = trim_env("SUPABASE_PWD")
+)
 
 if (any(!nzchar(creds)))
   stop("❌ One or more Supabase env vars are missing – aborting.")
