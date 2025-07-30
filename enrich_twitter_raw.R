@@ -44,13 +44,14 @@ cat("--------------------------------------------------------\n")
 ## 2 – DB connection -----------------------------------------------------------
 con <- DBI::dbConnect(
   RPostgres::Postgres(),
-  host     = creds["SUPABASE_HOST"],
-  port     = as.integer(creds["SUPABASE_PORT"]),
-  dbname   = creds["SUPABASE_DB"],
-  user     = creds["SUPABASE_USER"],
-  password = creds["SUPABASE_PWD"],
+  host     = creds[["SUPABASE_HOST"]],
+  port     = as.integer(creds[["SUPABASE_PORT"]]),
+  dbname   = creds[["SUPABASE_DB"]],
+  user     = creds[["SUPABASE_USER"]],
+  password = creds[["SUPABASE_PWD"]],
   sslmode  = "require"
 )
+
 
 
 ## 2 – download twitter_raw ----------------------------------------------------
