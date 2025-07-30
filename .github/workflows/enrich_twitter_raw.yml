@@ -1,0 +1,58 @@
+name: Enrich Twitter Data (+ flags)
+
+on:
+  # manual run from the Actions tab
+  workflow_dispatch:
+
+  # automatic run every day at 04:00 UTC  ← adjust or delete if not needed
+  schedule:
+    - cron: "0 4 * * *"        # min hr dom mon dow
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+
+    # ── Supabase credentials pulled from GitHub Secrets ──────────────────
+    env:
+      SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+      SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+      SUPABASE_DB:   ${{ secrets.SUPABASE_DB }}
+      SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+      SUPABASE_PWD:  ${{ secrets.SUPABASE_PWD }}
+
+    steps:
+      # 1 · checkout repository
+      - uses: actions/checkout@v4
+
+      # 2 · system libraries for CRAN packages that need compilation
+      - name: Install system libraries
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            libssl-dev libxml2-dev libcurl4-openssl-dev \
+            libfontconfig1-dev libfreetype6-dev libharfbuzz-dev \
+            libfribidi-dev libpng-dev libtiff5-dev libjpeg-dev
+
+      # 3 · setup R (uses public Posit binary cache → faster)
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # 4 · (optional) setup Pandoc — not strictly required for this script
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      # 5 · run the enrichment script
+      - name: Run enrich_twitter_raw.R
+        run: Rscript enrich_twitter_raw.R
+
+      # 6 · archive the script output (optional)
+      - name: Upload enrichment artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: enrich-output
+          path: |
+            enrich_twitter_raw.Rout
+            *.log
+            *.txt
+          if-no-files-found: ignore
